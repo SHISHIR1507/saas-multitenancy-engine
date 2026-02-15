@@ -1,0 +1,14 @@
+import type { Config } from 'drizzle-kit';
+import * as dotenv from 'dotenv';
+
+// Load .dev.vars for local development
+dotenv.config({ path: '.dev.vars' });
+
+export default {
+  schema: './src/db/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+} satisfies Config;

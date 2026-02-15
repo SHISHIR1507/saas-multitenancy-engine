@@ -1,0 +1,20 @@
+# Environment variables for local development
+# Copy this file to .dev.vars and fill in your values
+
+# Neon Postgres Database URL
+DATABASE_URL=postgresql://user:password@your-neon-host.neon.tech/dbname?sslmode=require
+
+# JWT Secret for session token generation (generate a random string)
+JWT_SECRET=your-secret-key-here
+
+# Bcrypt work factor (10 is recommended for development, 12+ for production)
+BCRYPT_WORK_FACTOR=10
+
+# Session token expiration in seconds (default: 7 days)
+SESSION_EXPIRATION=604800
+
+# Rate limit per tenant (requests per minute)
+RATE_LIMIT_PER_MINUTE=1000
+
+# Environment
+ENVIRONMENT=development

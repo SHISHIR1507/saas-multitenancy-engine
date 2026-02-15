@@ -1,0 +1,6 @@
+name = "saas-backend-layer"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# No KV or Durable Objects needed - using Neon Postgres instead
+# Database URL is set via environment variable DATABASE_URL

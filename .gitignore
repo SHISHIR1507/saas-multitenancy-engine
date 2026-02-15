@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+.env
+.env.local
+drizzle/*.sql
+!drizzle/0000_*.sql
+.cursor/
+.agents/
