@@ -108,6 +108,7 @@ export interface Env {
   SESSION_EXPIRATION: string;
   RATE_LIMIT_PER_MINUTE: string;
   ENVIRONMENT: string;
+  RESEND_API_KEY: string;
 }
 
 // Error types

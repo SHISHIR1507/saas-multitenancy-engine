@@ -18,3 +18,6 @@ RATE_LIMIT_PER_MINUTE=1000
 
 # Environment
 ENVIRONMENT=development
+
+# Resend API Key for sending emails (get from https://resend.com)
+RESEND_API_KEY=re_your_api_key_here
