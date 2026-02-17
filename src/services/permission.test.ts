@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 import {
   defineRole,
@@ -14,6 +14,16 @@ import { createDb } from '../db';
 import { schema } from '../db';
 
 const db = createDb(process.env.DATABASE_URL!);
+
+// Clean up database before each test
+beforeEach(async () => {
+  await db.delete(schema.organizationMembers);
+  await db.delete(schema.invitations);
+  await db.delete(schema.organizations);
+  await db.delete(schema.roles);
+  await db.delete(schema.sessions);
+  await db.delete(schema.users);
+});
 
 // Generators for property-based testing
 const tenantIdArb = fc.string({ minLength: 5, maxLength: 20 }).map(s => `tenant_${s}`);

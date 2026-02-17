@@ -2,9 +2,16 @@ import { describe, test, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 import { register, login, validateSession, logout } from './auth';
 import { createDb } from '../db';
+import { schema } from '../db';
 import * as bcrypt from 'bcryptjs';
 
 const db = createDb(process.env.DATABASE_URL!);
+
+// Clean up database before each test
+beforeEach(async () => {
+  await db.delete(schema.sessions);
+  await db.delete(schema.users);
+});
 
 // Generators for property-based testing
 const emailArb = fc.emailAddress();

@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 import {
   createOrganization,
@@ -13,6 +13,15 @@ import { schema } from '../db';
 import { eq, and } from 'drizzle-orm';
 
 const db = createDb(process.env.DATABASE_URL!);
+
+// Clean up database before each test
+beforeEach(async () => {
+  await db.delete(schema.organizationMembers);
+  await db.delete(schema.invitations);
+  await db.delete(schema.organizations);
+  await db.delete(schema.sessions);
+  await db.delete(schema.users);
+});
 
 // Generators for property-based testing
 const emailArb = fc.emailAddress();
@@ -336,7 +345,7 @@ describe('Organization Service - Edge Cases', () => {
     // Non-owner tries to invite
     await expect(
       inviteMember(db, org.id, inviteeEmail, 'member', nonOwner.id, tenantId)
-    ).rejects.toThrow('INSUFFICIENT_PERMISSIONS');
+    ).rejects.toThrow('Only organization owner can invite members');
   });
 
   test('Cannot remove organization owner', async () => {
@@ -348,7 +357,7 @@ describe('Organization Service - Edge Cases', () => {
     // Try to remove owner
     await expect(
       removeMember(db, org.id, owner.id, owner.id, tenantId)
-    ).rejects.toThrow('INVALID_OPERATION');
+    ).rejects.toThrow('Cannot remove organization owner');
   });
 
   test('Cannot accept invitation with wrong email', async () => {
@@ -363,7 +372,7 @@ describe('Organization Service - Edge Cases', () => {
     // Try to accept with wrong email
     await expect(
       acceptInvitation(db, invitation.id, wrongUser.id, wrongUser.email)
-    ).rejects.toThrow('INVALID_INVITATION');
+    ).rejects.toThrow('Invitation is for a different email');
   });
 
   test('Cannot accept expired invitation', async () => {
@@ -391,6 +400,6 @@ describe('Organization Service - Edge Cases', () => {
     // Try to accept expired invitation
     await expect(
       acceptInvitation(db, invitation.id, invitee.id, inviteeEmail)
-    ).rejects.toThrow('INVALID_INVITATION');
+    ).rejects.toThrow('Invitation has expired');
   });
 });
