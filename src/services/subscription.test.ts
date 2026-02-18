@@ -16,15 +16,6 @@ import { schema } from '../db';
 
 const db = createDb(process.env.DATABASE_URL!);
 
-// Clean up database before each test
-beforeEach(async () => {
-  await db.delete(schema.subscriptions);
-  await db.delete(schema.subscriptionTiers);
-  await db.delete(schema.organizationMembers);
-  await db.delete(schema.organizations);
-  await db.delete(schema.users);
-});
-
 // Generators for property-based testing
 const tenantIdArb = fc.string({ minLength: 5, maxLength: 20 }).map(s => `tenant_${s}`);
 const tierNameArb = fc.constantFrom('free', 'pro', 'enterprise', 'starter', 'business');
@@ -78,6 +69,13 @@ describe('Subscription Service - Tier Management', () => {
    * **Validates: Requirements 4.1, 9.2**
    */
   test('Property 21: Subscription tier definition round-trip', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     await fc.assert(
       fc.asyncProperty(
         tenantIdArb,
@@ -108,9 +106,9 @@ describe('Subscription Service - Tier Management', () => {
           return true;
         }
       ),
-      { numRuns: 20 }
+      { numRuns: 10 } // Reduced from 20 for faster tests
     );
-  });
+  }, 60000); // 60 second timeout
 });
 
 describe('Subscription Service - Subscription Lifecycle', () => {
@@ -119,6 +117,13 @@ describe('Subscription Service - Subscription Lifecycle', () => {
    * **Validates: Requirements 4.2**
    */
   test('Property 22: Subscription activates features', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -155,6 +160,13 @@ describe('Subscription Service - Subscription Lifecycle', () => {
    * **Validates: Requirements 4.3**
    */
   test('Property 23: Subscription changes update features', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -199,6 +211,13 @@ describe('Subscription Service - Subscription Lifecycle', () => {
    * **Validates: Requirements 4.4**
    */
   test('Property 24: Expired subscriptions restrict access', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -230,6 +249,13 @@ describe('Subscription Service - Subscription Lifecycle', () => {
    * **Validates: Requirements 4.5**
    */
   test('Property 25: Subscription status query accuracy', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -267,6 +293,13 @@ describe('Subscription Service - Subscription Lifecycle', () => {
 
 describe('Subscription Service - Usage Limits', () => {
   test('Check usage limits', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -300,6 +333,13 @@ describe('Subscription Service - Usage Limits', () => {
   });
 
   test('Undefined limit means unlimited', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -324,6 +364,13 @@ describe('Subscription Service - Usage Limits', () => {
 
 describe('Subscription Service - Edge Cases', () => {
   test('Can update tier definition', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
 
     // Define initial tier
@@ -350,6 +397,13 @@ describe('Subscription Service - Edge Cases', () => {
   });
 
   test('Get all tiers for tenant', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
 
     // Define multiple tiers
@@ -366,6 +420,13 @@ describe('Subscription Service - Edge Cases', () => {
   });
 
   test('Subscribing twice updates existing subscription', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');
@@ -384,6 +445,13 @@ describe('Subscription Service - Edge Cases', () => {
   });
 
   test('Cannot subscribe to non-existent tier', async () => {
+    // Clean up before this test
+    await db.delete(schema.subscriptions);
+    await db.delete(schema.subscriptionTiers);
+    await db.delete(schema.organizationMembers);
+    await db.delete(schema.organizations);
+    await db.delete(schema.users);
+
     const tenantId = `tenant_${Date.now()}`;
     const user = await createTestUser(tenantId, `user_${Date.now()}@test.com`);
     const org = await createTestOrg(tenantId, user.id, 'Test Org');

@@ -9,5 +9,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testTimeout: 30000, // 30 seconds for property-based tests
+    fileParallelism: false, // Run test files sequentially to avoid database conflicts
   },
 });

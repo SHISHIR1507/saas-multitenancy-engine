@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import { Database } from '../db';
 import { schema } from '../db';
 import { UsageRecord } from '../types';
@@ -42,17 +42,6 @@ export async function getUsage(
   startDate?: Date,
   endDate?: Date
 ): Promise<{ total: number; records: UsageRecord[] }> {
-  let query = db
-    .select()
-    .from(schema.usageRecords)
-    .where(
-      and(
-        eq(schema.usageRecords.organizationId, orgId),
-        eq(schema.usageRecords.tenantId, tenantId),
-        eq(schema.usageRecords.metricName, metricName)
-      )
-    );
-
   // Add date filters if provided
   const conditions = [
     eq(schema.usageRecords.organizationId, orgId),
@@ -122,11 +111,21 @@ export async function checkUsageLimit(
   // Check subscription limit
   const limitCheck = await checkLimit(db, orgId, metricName, usage, tenantId);
 
+  // Calculate remaining based on limit
+  let remaining: number;
+  if (limitCheck.limit === -1) {
+    remaining = -1; // Unlimited
+  } else if (limitCheck.limit === 0) {
+    remaining = 0; // No subscription or inactive
+  } else {
+    remaining = Math.max(0, limitCheck.limit - usage);
+  }
+
   return {
     withinLimit: limitCheck.withinLimit,
     limit: limitCheck.limit,
     usage,
-    remaining: limitCheck.limit === -1 ? -1 : Math.max(0, limitCheck.limit - usage),
+    remaining,
   };
 }
 
