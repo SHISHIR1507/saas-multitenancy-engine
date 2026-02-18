@@ -75,16 +75,52 @@ The system implements a **shared infrastructure, isolated data** pattern:
 
 ### 🛡️ Security Features
 - **Rate Limiting**: Per-tenant request throttling (configurable, default: 1000 req/min)
-- **Input Validation**: Email format, password strength, XSS prevention
+- **Input Validation**: 
+  - Email format, password strength, XSS prevention
+  - SQL injection detection and prevention
+  - String length validation, alphanumeric validation
+  - URL and JSON format validation
+  - Comprehensive recursive input sanitization
+- **Tenant Isolation**: 
+  - All database queries filtered by `tenant_id`
+  - Tenant ID validation with SQL injection prevention
+  - Tenant ownership verification for resources
+  - Tenant-scoped database query helpers
 - **Error Handling**: Consistent error responses with request IDs for debugging
-- **Tenant Isolation**: All database queries filtered by `tenant_id`
+
+### 📊 Monitoring & Logging
+- **Structured Logging**: JSON-formatted logs with context (tenant ID, user ID, request ID)
+- **Sensitive Data Redaction**: Automatic removal of passwords, tokens, API keys from logs
+- **Child Loggers**: Context inheritance for request-scoped logging
+- **Specialized Logging**: Authentication events, API errors with full context
+- **Log Levels**: Debug, info, warn, error with appropriate console output
+
+### 🎯 Role-Based Access Control (RBAC)
+- Define custom roles per tenant with flexible permissions
+- Wildcard permission support (`*` for all, `resource.*` for prefix matching)
+- Permission evaluation engine with tenant-scoped roles
+- Check user permissions for specific actions
+
+### 💳 Subscription Management
+- Define subscription tiers with features and limits
+- Subscribe organizations to tiers with automatic feature activation
+- Update subscriptions and handle tier changes
+- Cancel subscriptions with status tracking
+- Feature access control based on subscription tier
+- Limit checking for usage quotas
+
+### 📈 Usage Tracking
+- Record usage events (API calls, users added, features used)
+- Time-based usage queries with period filtering
+- Aggregated usage metrics across organizations
+- Automatic limit enforcement with subscription integration
+- Monthly billing cycle support with usage reset
+- Unlimited usage support for undefined limits
 
 ### 📊 Planned Features
-- Role-based permissions (RBAC) with wildcard support
-- Subscription management with tier-based features
-- Usage tracking and quota enforcement
-- Webhook support for subscription events
-- Monitoring and observability (metrics, logs, traces)
+- Webhook support for subscription events (Stripe/Razorpay integration)
+- Row-Level Security (RLS) for production hardening
+- Advanced monitoring (metrics, traces, dashboards)
 
 ## 🚀 Getting Started
 
@@ -194,15 +230,50 @@ npm run test:watch
 
 ### Property-Based Testing
 
-The project uses property-based testing (PBT) with `fast-check` to verify correctness properties:
+The project uses property-based testing (PBT) with `fast-check` to verify correctness properties across 42 properties:
 
-- **Property 1**: Valid registration creates user and session
-- **Property 2**: Valid login returns session token
-- **Property 3**: Invalid credentials are rejected
-- **Property 8**: Passwords are hashed with bcrypt
-- **Property 31-33**: API key generation, validation, and rejection
+**Authentication (Properties 1-9)**:
+- Valid registration creates user and session
+- Valid login returns session token
+- Invalid credentials are rejected
+- Passwords are hashed with bcrypt
+- Session tokens are cryptographically random
 
-Each property runs 100+ iterations with randomly generated inputs to catch edge cases.
+**Organization Management (Properties 10-14)**:
+- Organization creation and retrieval
+- Member invitations and acceptance
+- Multi-organization membership support
+
+**Permissions (Properties 15-20)**:
+- Role definition and retrieval
+- Permission evaluation with wildcards
+- Tenant-scoped permission checks
+
+**Subscriptions (Properties 21-25)**:
+- Subscription tier definition round-trip
+- Feature activation based on subscription
+- Subscription changes update features
+- Expired subscriptions restrict access
+
+**Usage Tracking (Properties 26-30)**:
+- Usage recording persistence
+- Usage aggregation correctness
+- Usage limit enforcement
+- Multi-organization usage tracking
+
+**API Keys (Properties 31-33)**:
+- API key generation, validation, and rejection
+
+**Security (Properties 35-36, 39)**:
+- Tenant data isolation
+- Input validation prevents injection
+- Configuration validation
+
+**Logging (Properties 40, 42)**:
+- Error logging completeness
+- Authentication failure logging
+
+Each property runs 10-100 iterations with randomly generated inputs to catch edge cases.
 
 ## 🗄️ Database Schema
 
@@ -276,14 +347,19 @@ src/
 ├── middleware/
 │   ├── api-key-auth.ts     # API key authentication
 │   ├── error-handler.ts    # Global error handling
+│   ├── logger.ts           # Structured logging system
 │   ├── rate-limit.ts       # Rate limiting
 │   ├── request-id.ts       # Request ID tracking
+│   ├── tenant-isolation.ts # Tenant isolation utilities
 │   └── validation.ts       # Input validation utilities
 └── services/
     ├── api-key.ts          # API key management
     ├── auth.ts             # Authentication logic
     ├── email.ts            # Email sending (Resend)
-    └── organization.ts     # Organization management
+    ├── organization.ts     # Organization management
+    ├── permission.ts       # RBAC permission system
+    ├── subscription.ts     # Subscription management
+    └── usage.ts            # Usage tracking
 ```
 
 ## 🔒 Security Considerations
@@ -306,9 +382,25 @@ src/
 - Last-used tracking for security audits
 
 ### Tenant Isolation
-- All queries filtered by `tenant_id`
-- No cross-tenant data leakage
-- Validated at application layer
+- All queries filtered by `tenant_id` at application layer
+- Tenant ID validation prevents SQL injection
+- Tenant ownership verification for all resource access
+- Tenant-scoped database query helpers ensure proper filtering
+- No cross-tenant data leakage possible
+
+### Input Validation
+- Comprehensive validation for all user inputs
+- SQL injection detection and prevention
+- XSS prevention through input sanitization
+- String length, format, and character validation
+- URL and JSON structure validation
+- Recursive sanitization for nested objects
+
+### Logging Security
+- Sensitive data automatically redacted from logs
+- Never logs passwords, tokens, API keys, or secrets
+- Structured logging with tenant/user context
+- Request ID tracking for debugging without exposing sensitive data
 
 
 
