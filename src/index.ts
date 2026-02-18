@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Env } from './types';
 import { errorHandler } from './middleware/error-handler';
 import { requestIdMiddleware } from './middleware/request-id';
+import { createDb } from './db';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -11,13 +12,42 @@ app.use('*', requestIdMiddleware);
 // Error handling
 app.onError(errorHandler);
 
-// Health check endpoint
-app.get('/health', (c) => {
-  return c.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    environment: c.env.ENVIRONMENT 
-  });
+// Health check endpoint with database connectivity check
+app.get('/health', async (c) => {
+  const startTime = Date.now();
+  
+  try {
+    // Check database connectivity
+    const db = createDb(c.env.DATABASE_URL);
+    
+    // Simple query to verify database is accessible
+    await db.execute('SELECT 1');
+    
+    const responseTime = Date.now() - startTime;
+    
+    return c.json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      environment: c.env.ENVIRONMENT,
+      checks: {
+        database: 'connected',
+      },
+      responseTimeMs: responseTime,
+    }, 200);
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    
+    return c.json({ 
+      status: 'unhealthy', 
+      timestamp: new Date().toISOString(),
+      environment: c.env.ENVIRONMENT,
+      checks: {
+        database: 'disconnected',
+      },
+      error: error instanceof Error ? error.message : 'Unknown error',
+      responseTimeMs: responseTime,
+    }, 503);
+  }
 });
 
 // API info
