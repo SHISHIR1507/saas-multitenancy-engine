@@ -38,3 +38,108 @@ export function sanitizeString(input: string): string {
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;');
 }
+
+// Validate string length
+export function validateStringLength(
+  value: string,
+  fieldName: string,
+  minLength: number,
+  maxLength: number
+): void {
+  if (value.length < minLength) {
+    throw new AppError(
+      'INVALID_INPUT',
+      `${fieldName} must be at least ${minLength} characters`,
+      400,
+      { field: fieldName, minLength }
+    );
+  }
+  if (value.length > maxLength) {
+    throw new AppError(
+      'INVALID_INPUT',
+      `${fieldName} must be at most ${maxLength} characters`,
+      400,
+      { field: fieldName, maxLength }
+    );
+  }
+}
+
+// Detect potential SQL injection attempts
+export function containsSQLInjection(input: string): boolean {
+  const sqlPatterns = [
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)/i,
+    /(--|;|\/\*|\*\/)/,
+    /(\bOR\b.*=.*)/i,
+    /(\bAND\b.*=.*)/i,
+    /(UNION.*SELECT)/i,
+  ];
+
+  return sqlPatterns.some(pattern => pattern.test(input));
+}
+
+// Validate input doesn't contain SQL injection
+export function validateNoSQLInjection(input: string, fieldName: string): void {
+  if (containsSQLInjection(input)) {
+    throw new AppError(
+      'INVALID_INPUT',
+      `${fieldName} contains invalid characters`,
+      400,
+      { field: fieldName }
+    );
+  }
+}
+
+// Validate alphanumeric with specific allowed characters
+export function validateAlphanumeric(
+  input: string,
+  fieldName: string,
+  allowedChars: string = '_-'
+): void {
+  const regex = new RegExp(`^[a-zA-Z0-9${allowedChars}]+$`);
+  if (!regex.test(input)) {
+    throw new AppError(
+      'INVALID_INPUT',
+      `${fieldName} can only contain letters, numbers, and ${allowedChars}`,
+      400,
+      { field: fieldName }
+    );
+  }
+}
+
+// Validate URL format
+export function isValidURL(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Validate JSON structure
+export function isValidJSON(input: string): boolean {
+  try {
+    JSON.parse(input);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Comprehensive input sanitization
+export function sanitizeInput(input: any): any {
+  if (typeof input === 'string') {
+    return sanitizeString(input);
+  }
+  if (Array.isArray(input)) {
+    return input.map(sanitizeInput);
+  }
+  if (typeof input === 'object' && input !== null) {
+    const sanitized: any = {};
+    for (const key in input) {
+      sanitized[key] = sanitizeInput(input[key]);
+    }
+    return sanitized;
+  }
+  return input;
+}
